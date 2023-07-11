@@ -126,12 +126,17 @@ func (p *PlayerAgent) askLoby(room pb.Room) (string, error) {
 func (p *PlayerAgent) sync(stream pb.ChatRoomService_ChatClient) error {
 	ticker := time.NewTicker(time.Millisecond * common.InputSyncMil)
 	roomChangeCh := p.input.RoomChangeChan()
+	consumingLines := 0
 	defer ticker.Stop()
 
 	for {
 		select {
 		case room := <-roomChangeCh:
 			go p.JoinChatRoom(room)
+			for i := 0; i < consumingLines; i++ {
+				fmt.Println(common.Space64)
+			}
+			reverseLines(consumingLines)
 			return nil
 		case now := <-ticker.C:
 			var s string
@@ -170,7 +175,8 @@ func (p *PlayerAgent) sync(stream pb.ChatRoomService_ChatClient) error {
 				displayMessage(m.GetName(), m.GetMsg())
 			}
 			fmt.Println(common.Space64)
-			reverseLines(len + 2)
+			consumingLines = len + 2
+			reverseLines(consumingLines)
 		}
 	}
 }
