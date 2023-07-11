@@ -11,7 +11,7 @@ type LobyServer struct {
 	pb.UnimplementedLobyServiceServer
 }
 
-func Room(ctx context.Context, req *pb.RoomRequest) (*pb.RoomResponse, error) {
+func (s *LobyServer) Room(ctx context.Context, req *pb.RoomRequest) (*pb.RoomResponse, error) {
 	r := req.GetRoom()
 	res := &pb.RoomResponse{
 		IpAddr: "",

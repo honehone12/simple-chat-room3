@@ -1,9 +1,7 @@
 package main
 
 import (
-	"simple-chat-room2/common"
-	pb "simple-chat-room2/pb"
-	"time"
+	pb "simple-chat-room3/pb"
 
 	"github.com/eiannone/keyboard"
 )
@@ -14,17 +12,28 @@ const (
 	space         = 0x20
 )
 
+func CloseKeyInput() error {
+	return keyboard.Close()
+}
+
 type KeyInput struct {
 	buffer *Buffer
 
-	errCh chan error
+	roomChangeCh chan pb.Room
+	errCh        chan error
 }
 
 func NewKeyInput() KeyInput {
 	return KeyInput{
 		buffer: NewBuffer(),
-		errCh:  make(chan error),
+
+		roomChangeCh: make(chan pb.Room),
+		errCh:        make(chan error),
 	}
+}
+
+func (i KeyInput) RoomChangeChan() <-chan pb.Room {
+	return i.roomChangeCh
 }
 
 func (i KeyInput) ErrChan() <-chan error {
@@ -40,52 +49,24 @@ func (i KeyInput) Input() {
 
 	for e := range keyEvents {
 		if e.Err != nil {
-			err = e.Err
+			i.errCh <- err
 			break
 		}
 
 		if e.Key == keyboard.KeyEsc {
-			err = nil
+			i.errCh <- nil
 			break
 		} else if e.Key == keyboard.KeyBackspace || e.Key == keyboard.KeyBackspace2 {
 			i.buffer.Back()
 		} else if e.Key == keyboard.KeySpace {
 			i.buffer.Add(space)
+		} else if e.Key >= keyboard.KeyF12 && e.Key <= keyboard.KeyF1 {
+			i.buffer.Clear()
+			room := pb.Room(keyboard.KeyF1 - e.Key)
+			i.roomChangeCh <- room
 		} else if e.Rune != nonAlphaNum {
-			// still not sure what will be lost with cast
+			// en only anyway
 			i.buffer.Add(byte(e.Rune))
 		}
 	}
-
-	// can not handle this error (this case needs force quit anyway)
-	_ = keyboard.Close()
-	// wait for close then send err to main, to prevent quit app before close
-	i.errCh <- err
-}
-
-func (i KeyInput) Sync(name string, stream pb.ChatRoomService_ChatClient) {
-	ticker := time.NewTicker(time.Millisecond * common.InputSyncMil)
-
-	var err error
-	for now := range ticker.C {
-		var s string
-		s, err = i.buffer.String()
-		if err != nil {
-			break
-		}
-
-		err = stream.Send(&pb.ChatClientMsg{
-			UnixMil: now.UnixMilli(),
-			ChatMsg: &pb.ChatMsg{
-				Name: name,
-				Msg:  s,
-			},
-		})
-		if err != nil {
-			break
-		}
-	}
-
-	ticker.Stop()
-	i.errCh <- err
 }

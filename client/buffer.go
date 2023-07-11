@@ -2,7 +2,7 @@ package main
 
 import (
 	"errors"
-	"simple-chat-room2/common"
+	"simple-chat-room3/common"
 	"unicode/utf8"
 )
 
@@ -38,6 +38,13 @@ func (b *Buffer) Back() {
 		b.cursor--
 		b.inner[b.cursor] = space
 	}
+}
+
+func (b *Buffer) Clear() {
+	for i := 0; i < common.InputBufferSize; i++ {
+		b.inner[i] = space
+	}
+	b.cursor = 0
 }
 
 func (b *Buffer) String() (string, error) {

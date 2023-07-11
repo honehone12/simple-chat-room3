@@ -12,7 +12,7 @@ import (
 
 func launchLobyServer(errCh chan<- error) {
 	grpcServer := grpc.NewServer()
-	lServer := LobyServer{}
+	lServer := &LobyServer{}
 	pb.RegisterLobyServiceServer(grpcServer, lServer)
 
 	addr := fmt.Sprintf(common.Localhost, common.Port-1)
@@ -29,11 +29,11 @@ func launchLobyServer(errCh chan<- error) {
 
 func launchChatRoomServer(i int, errCh chan<- error) {
 	grpcServer := grpc.NewServer()
-	crServer := ChatRoomServer{
+	crServer := &ChatRoomServer{
 		msgMemMap:  make(map[string]*MsgMemory),
 		sortedKeys: make([]string, 0),
 	}
-	pb.RegisterChatRoomServiceServer(grpcServer, &crServer)
+	pb.RegisterChatRoomServiceServer(grpcServer, crServer)
 
 	addr := fmt.Sprintf(common.Localhost, common.Port+i)
 
