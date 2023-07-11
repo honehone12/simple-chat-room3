@@ -21,6 +21,7 @@ func main() {
 	go player.JoinChatRoom(pb.Room_F1)
 
 	err := player.CatchError()
+	player.cleanUpDisplay()
 	if err != nil {
 		log.Fatalln(err)
 	}

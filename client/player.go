@@ -24,19 +24,26 @@ func reverseLines(lns int) {
 }
 
 type PlayerAgent struct {
-	name string
-
-	input KeyInput
-	errCh chan error
+	name           string
+	consumingLines int
+	input          KeyInput
+	errCh          chan error
 }
 
 func NewPlayerAgent(name string) *PlayerAgent {
 	return &PlayerAgent{
-		name: name,
-
-		input: NewKeyInput(),
-		errCh: make(chan error),
+		name:           name,
+		consumingLines: 0,
+		input:          NewKeyInput(),
+		errCh:          make(chan error),
 	}
+}
+
+func (p *PlayerAgent) cleanUpDisplay() {
+	for i := 0; i < p.consumingLines; i++ {
+		fmt.Println(common.Space64)
+	}
+	reverseLines(p.consumingLines)
 }
 
 func (p *PlayerAgent) StartKeyInput() {
@@ -126,17 +133,13 @@ func (p *PlayerAgent) askLoby(room pb.Room) (string, error) {
 func (p *PlayerAgent) sync(stream pb.ChatRoomService_ChatClient) error {
 	ticker := time.NewTicker(time.Millisecond * common.InputSyncMil)
 	roomChangeCh := p.input.RoomChangeChan()
-	consumingLines := 0
 	defer ticker.Stop()
 
 	for {
 		select {
 		case room := <-roomChangeCh:
 			go p.JoinChatRoom(room)
-			for i := 0; i < consumingLines; i++ {
-				fmt.Println(common.Space64)
-			}
-			reverseLines(consumingLines)
+			p.cleanUpDisplay()
 			return nil
 		case now := <-ticker.C:
 			var s string
@@ -175,8 +178,8 @@ func (p *PlayerAgent) sync(stream pb.ChatRoomService_ChatClient) error {
 				displayMessage(m.GetName(), m.GetMsg())
 			}
 			fmt.Println(common.Space64)
-			consumingLines = len + 2
-			reverseLines(consumingLines)
+			p.consumingLines = len + 2
+			reverseLines(p.consumingLines)
 		}
 	}
 }
