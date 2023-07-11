@@ -1,0 +1,68 @@
+syntax = "proto3";
+
+option go_package = "./";
+
+service LobyService {
+    rpc Room(RoomRequest) returns (RoomResponse);
+}
+
+service ChatRoomService {
+    rpc Join(JoinRequest) returns (JoinResponse);
+    rpc Chat(stream ChatClientMsg) returns (stream ChatServerMsg);
+}
+
+message RoomRequest {
+    Room room = 1;
+}
+
+message RoomResponse {
+    string ip_addr = 1;
+
+    ErrorMsg err_msg = 2;
+}
+
+message JoinRequest {
+    string name = 1;
+    Room room = 2;
+}
+
+message JoinResponse {
+    ErrorMsg err_msg = 2;
+}
+
+message ChatClientMsg {
+    int64 unix_mil = 1;
+    ChatMsg chat_msg = 2;
+}
+
+message ChatServerMsg {
+    int64 unix_mil = 1;
+    repeated ChatMsg chat_msgs = 2;
+    
+    ErrorMsg err_msg = 3;
+}
+
+message ChatMsg {
+    string name = 1;
+    string msg = 2;
+}
+
+message ErrorMsg {
+    bool err = 1;
+    string msg = 2;
+}
+
+enum Room {
+    F1 = 0;
+    F2 = 1;
+    F3 = 2;
+    F4 = 3;
+    F5 = 4;
+    F6 = 5;
+    F7 = 6;
+    F8 = 7;
+    F9 = 8;
+    F10 = 9;
+    F11 = 10;
+    F12 = 11;
+}
